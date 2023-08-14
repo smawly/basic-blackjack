@@ -1,82 +1,79 @@
 import random
 
-def draw_card():
-    return random.choice(deck)
 
-def calculate_score(hand):
-    score = sum(card.value for card in hand)
-    if score > 21:
-        for card in hand:
-            if card.rank == 'Ace' and card.value == 11:
-                card.value = 1
-                score -= 10
-                if score <= 21:
-                    break
+def deal_card():
+    """Returns a random card from the deck."""
+    cards = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+    return random.choice(cards)
+
+
+def calculate_score(cards):
+    """Calculates the total value of a hand of cards."""
+    score = 0
+    num_aces = cards.count('A')
+
+    for card in cards:
+        if card == 'A':
+            score += 11
+        elif card in ['K', 'Q', 'J']:
+            score += 10
+        else:
+            score += int(card)
+
+    while score > 21 and num_aces:
+        score -= 10
+        num_aces -= 1
+
     return score
 
-class Card:
-    def __init__(self, rank, suit):
-        self.rank = rank
-        self.suit = suit
-        if rank in ['J', 'Q', 'K']:
-            self.value = 10
-        elif rank == 'A':
-            self.value = 11
+
+def blackjack():
+    player_cards = []
+    computer_cards = []
+
+    for _ in range(2):
+        player_cards.append(deal_card())
+        computer_cards.append(deal_card())
+
+    game_over = False
+
+    while not game_over:
+        player_score = calculate_score(player_cards)
+        computer_score = calculate_score(computer_cards)
+
+        print(f"Your cards: {player_cards}, current score: {player_score}")
+        print(f"Computer's first card: {computer_cards[0]}")
+
+        if player_score == 21 or computer_score == 21:
+            game_over = True
         else:
-            self.value = int(rank)
+            should_continue = input("Type 'hit' to get another card, or 'stand' to pass: ").lower()
+            if should_continue == 'hit':
+                player_cards.append(deal_card())
+                if calculate_score(player_cards) > 21:
+                    game_over = True
+            else:
+                game_over = True
 
-class Deck:
-    def __init__(self):
-        ranks = [str(n) for n in range(2, 11)] + ['J', 'Q', 'K', 'A']
-        suits = ['hearts', 'diamonds', 'clubs', 'spades']
-        self.cards = [Card(rank, suit) for rank in ranks for suit in suits]
-        random.shuffle(self.cards)
+    while computer_score < 17:
+        computer_cards.append(deal_card())
+        computer_score = calculate_score(computer_cards)
 
-    def __len__(self):
-        return len(self.cards)
+    print(f"Your final hand: {player_cards}, final score: {player_score}")
+    print(f"Computer's final hand: {computer_cards}, final score: {computer_score}")
 
-    def __getitem__(self, position):
-        return self.cards[position]
-
-class Hand:
-    def __init__(self):
-        self.cards = []
-
-    def add_card(self, card):
-        self.cards.append(card)
-
-    def __str__(self):
-        return ', '.join(str(card.rank) + ' of ' + str(card.suit) for card in self.cards)
-
-deck = Deck()
-player_hand = Hand()
-dealer_hand = Hand()
-
-for i in range(2):
-    player_hand.add_card(draw_card())
-    dealer_hand.add_card(draw_card())
-
-while True:
-    print('Player has:', player_hand)
-    print('Dealer has:', dealer_hand)
-    choice = input('Do you want to hit or stand? ')
-    if choice.lower() == 'hit':
-        player_hand.add_card(draw_card())
-        if calculate_score(player_hand.cards) > 21:
-            print('Player busts!')
-            break
+    if player_score > 21:
+        print("You went over 21. You lose.")
+    elif computer_score > 21:
+        print("Computer went over 21. You win!")
+    elif player_score == computer_score:
+        print("It's a draw!")
+    elif player_score == 21:
+        print("Blackjack! You win!")
+    elif player_score > computer_score:
+        print("You win!")
     else:
-        while calculate_score(dealer_hand.cards) < 17:
-            dealer_hand.add_card(draw_card())
-        print('Player has:', player_hand)
-        print('Dealer has:', dealer_hand)
-        player_score = calculate_score(player_hand.cards)
-        dealer_score = calculate_score(dealer_hand.cards)
-        if dealer_score > 21 or player_score > dealer_score:
-            print('Player wins!')
-            break
-        elif player_score < dealer_score:
-            print('Dealer wins!')
-            break
-        else:
-            print('Tie!')
+        print("You lose.")
+
+
+blackjack()
